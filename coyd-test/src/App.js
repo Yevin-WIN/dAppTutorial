@@ -11,74 +11,58 @@ function App() {
   const [balance, setBalance] = useState(0);
   const [whitelisted, setWhitelisted] = useState(false);
 
-  useEffect(() => {
-    // Connect to the Ethereum network
-    async function connect() {
-      if (window.ethereum) {
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const signer = provider.getSigner();
-          const network = await provider.getNetwork();
-          const contractAddress = "0x55D25E611402fB7daA4D77b4E812B3b07656ba09"; // Replace with your contract address
-          const contract = new ethers.Contract(
-            contractAddress,
-            COYToken.abi,
-            signer
-          );
-          setContract(contract);
-          const account = (await signer.getAddress()).toLowerCase();
-          setAccount(account);
-          const balance = await contract.balanceOf(account);
-          setBalance(ethers.utils.formatEther(balance));
-          const whitelisted = await contract.hasRole(
-            "0x8429d542926e6695b59ac6fbdcd9b37e8b1aeb757afab06ab60b1bb5878c3b49",
-            account
-          );
-          setWhitelisted(whitelisted);
-        } catch (error) {
-          console.error(error);
-        }
+  const COY_ADDRESS = "<YOUR CONTRACT ADDRESS>";
+
+  async function connectWallet() {
+    if (window.ethereum) {
+      try {
+        const web3 = new Web3(window.ethereum);
+        await window.ethereum.enable();
+        setWeb3(web3);
+        const accounts = await web3.eth.getAccounts();
+        setAccounts(accounts);
+        const contract = new web3.eth.Contract(COY_ABI, COY_ADDRESS);
+        setContract(contract);
+        const balance = await contract.methods.balanceOf(accounts[0]).call();
+        setBalance(balance);
+        const totalSupply = await contract.methods.totalSupply().call();
+        console.log(totalSupply);
+      } catch (error) {
+        console.error(error);
       }
-    }
-
-    connect();
-  }, []);
-
-  async function mint() {
-    try {
-      const amount = ethers.utils.parseEther("100");
-      const tx = await contract.mint(account, amount);
-      await tx.wait();
-      const balance = await contract.balanceOf(account);
-      setBalance(ethers.utils.formatEther(balance));
-    } catch (error) {
-      console.error(error);
+    } else {
+      alert("Please install MetaMask to connect to Ethereum network");
     }
   }
 
-  async function addWhitelisted() {
-    try {
-      const address = "0xd1bbbd53ae93700628ca6e33a69e8b18dc80d7b7"; // Replace with the address to whitelist
-      const tx = await contract.addWhitelisted(address);
-      await tx.wait();
-      const whitelisted = await contract.hasRole("0x8429d542926e6695b59ac6fbdcd9b37e8b1aeb757afab06ab60b1bb5878c3b49", address);
-      setWhitelisted(whitelisted);
-    } catch (error) {
-      console.error(error);
-    }
+  async function donateForTransaction() {
+    const gasPrice = await web3.eth.getGasPrice();
+    const gasLimit = 300000;
+    const totalCost = gasPrice * gasLimit;
+    const value = web3.utils.toBN(totalCost).add(web3.utils.toBN(amount));
+    await contract.methods.donate('<Foundation Account>').send({ from: accounts[0], value: amount });
+    const balance = await contract.methods.balanceOf(accounts[0]).call();
+    setBalance(balance);
   }
 
-  async function transfer() {
-    try {
-      const recipient = "0xd1bbbd53AE93700628Ca6e33a69E8b18DC80D7b7"; // Replace with the address to transfer to
-      const amount = ethers.utils.parseEther("10");
-      const tx = await contract.transfer(recipient, amount);
-      await tx.wait();
-      const balance = await contract.balanceOf(account);
-      setBalance(ethers.utils.formatEther(balance));
-    } catch (error) {
-      console.error(error);
-    }
+  async function justDonate(){
+    const gasPrice = await web3.eth.getGasPrice();
+    const gasLimit = 300000;
+    const totalCost = gasPrice * gasLimit;
+    const value = web3.utils.toBN(totalCost).add(web3.utils.toBN(amount));
+    await contract.methods.justDonate().send({ from: accounts[0], value: amount });
+    const balance = await contract.methods.balanceOf(accounts[0]).call();
+    setBalance(balance);
+  }
+
+  async function burnTokens() {
+    const goalByte = ethers.utils.formatBytes32String(goal)
+    await contract.methods.burn(amount, goalByte).send({ from: accounts[0] });
+    const balance = await contract.methods.balanceOf(accounts[0]).call();
+    setBalance(balance);
+    const burned = await contract.methods.burnedTokens(goalByte).call();
+    setBurned(burned);
+    console.log(goal, burned);
   }
 
   return (

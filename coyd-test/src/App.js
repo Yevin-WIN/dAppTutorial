@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import COYToken from "./abi/COYToken.json";
 import React, { useState, useEffect} from "react";
+import Web3 from "web3";
 
 const { ethers } = require("ethers");
 const COY_ABI = COYToken.abi;

@@ -4,17 +4,14 @@ import COYToken from "./abi/COYToken.json";
 import React, { useState, useEffect} from "react";
 
 const { ethers } = require("ethers");
-const COY_ABI = COYToken.abi;
-const COY_ADDRESS = "<YOUR CONTRACT ADDRESS>";
 
 function App() {
-  const [web3, setWeb3] = useState(null);
-  const [accounts, setAccounts] = useState([]);
   const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState("");
   const [balance, setBalance] = useState(0);
-  const [amount, setAmount] = useState(0);
-  const [goal, setGoal] = useState('');
-  const [burned, setBurned] = useState(0);
+  const [whitelisted, setWhitelisted] = useState(false);
+
+  const COY_ADDRESS = "<YOUR CONTRACT ADDRESS>";
 
   async function connectWallet() {
     if (window.ethereum) {
@@ -70,18 +67,13 @@ function App() {
 
   return (
     <div>
-      <button className='button' onClick={connectWallet}>Connect to Wallet</button>
-      <div>Account: {accounts.length > 0 ? accounts[0] : "Not connected"}</div>
-      <div>COY Token Balance: {balance}</div>
-      <div>
-        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        <button className='button' onClick={donateForTransaction}>거래를 위한 기부</button>
-        <button className='button' onClick={justDonate}>그냥 기부</button>
-      </div>
-      <div>
-        <input type="text" value={goal} onChange={(e) => setGoal(e.target.value)} />
-        <button className='button' onClick={burnTokens}>Burn Tokens</button>
-      </div>
+      <h1>COYToken</h1>
+      <p>Account: {account}</p>
+      <p>Balance: {balance} COY</p>
+      <p>Whitelisted: {whitelisted.toString()}</p>
+      <button onClick={mint}>Mint 100 COY</button>
+      <button onClick={addWhitelisted}>Add Whitelisted</button>
+      <button onClick={transfer}>Transfer 10 COY</button>
     </div>
   );
 }
